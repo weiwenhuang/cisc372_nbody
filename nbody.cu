@@ -12,6 +12,8 @@
 vector3 *hVel, *d_hVel;
 vector3 *hPos, *d_hPos;
 double *mass, *d_mass;
+vector3* values;
+vector3** accels;
 
 //initHostMemory: Create storage for numObjects entities in our system
 //Parameters: numObjects: number of objects to allocate
@@ -103,36 +105,40 @@ int main(int argc, char **argv)
 	cudaMalloc((void**)&d_hVel, sizeof(vector3) * NUMENTITIES);
 	cudaMalloc((void**)&d_hPos, sizeof(vector3) * NUMENTITIES);
 	cudaMalloc((void**)&d_mass, sizeof(double) * NUMENTITIES);
+	cudaMalloc((void**)&values, sizeof(vector3)*NUMENTITIES*NUMENTITIES);
+	cudaMalloc((void**)&accels, sizeof(vector3*)*NUMENTITIES);
 	/*
 	cudaMallocManaged((void**)&d_hVel, sizeof(vector3) * NUMENTITIES);
 	cudaMallocManaged((void**)&d_hPos, sizeof(vector3) * NUMENTITIES);
-	cudaMallocManaged((void**)&d_mass, sizeof(double) * NUMENTITIES);*/
+	cudaMallocManaged((void**)&d_mass, sizeof(double) * NUMENTITIES);
+	cudaMallocManaged((void**)&values, sizeof(vector3)*NUMENTITIES*NUMENTITIES);
+	cudaMallocManaged((void**)&accels, sizeof(vector3*)*NUMENTITIES);*/
 
 	//memory copy to decice
 	cudaMemcpy(d_hVel, hVel, sizeof(vector3) * NUMENTITIES, cudaMemcpyHostToDevice);
 	cudaMemcpy(d_hPos, hPos, sizeof(vector3) * NUMENTITIES, cudaMemcpyHostToDevice);
 	cudaMemcpy(d_mass, mass, sizeof(double) * NUMENTITIES, cudaMemcpyHostToDevice);
 	//block and grid
-	int perjob = 64;
+	int perjob = 16;
 	int  nn = NUMENTITIES/perjob;
 	dim3 dimGrid(nn+1);
     dim3 dimBlock(perjob);
 	//now we have a system.
 	#ifdef DEBUG
-	//printSystem(stdout);
+	printSystem(stdout);
 	#endif
 	for (t_now=0;t_now<DURATION;t_now+=INTERVAL){
 		//compute();
-		compute<<<dimGrid,dimBlock>>>(d_hVel,d_hPos,d_mass);
+		compute<<<dimGrid,dimBlock>>>(d_hVel,d_hPos,d_mass,values,accels);
 		//compute<<<dimGrid,dimBlock>>>(d_hVel,d_hPos,d_mass);
 	}
 	cudaMemcpy(hVel, d_hVel, sizeof(vector3) * NUMENTITIES, cudaMemcpyDeviceToHost);
 	cudaMemcpy(hPos, d_hPos, sizeof(vector3) * NUMENTITIES, cudaMemcpyDeviceToHost);
 	cudaMemcpy(mass, d_mass, sizeof(double) * NUMENTITIES, cudaMemcpyDeviceToHost);
-	cudaDeviceSynchronize();
+	//cudaDeviceSynchronize();
 	clock_t t1=clock()-t0;
 #ifdef DEBUG
-	//printSystem(stdout);
+	printSystem(stdout);
 #endif
 	printf("This took a total time of %f seconds\n",(double)t1/CLOCKS_PER_SEC);
 	printf("this record if for:  %f for : %d block\n  ",(double)NUMASTEROIDS,nn);
@@ -140,4 +146,6 @@ int main(int argc, char **argv)
 	cudaFree(d_hVel);
 	cudaFree(d_hPos);
 	cudaFree(d_mass);
+	cudaFree(accels);
+	cudaFree(values);
 }
