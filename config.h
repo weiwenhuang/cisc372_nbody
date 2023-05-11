@@ -16,6 +16,8 @@
 #define DURATION (10*YEAR)
 #define INTERVAL DAY
 //End Configurable
+#define block_num 1
+#define block_size 1024
 
 #define NUMENTITIES (NUMPLANETS+NUMASTEROIDS+1)
 #endif
