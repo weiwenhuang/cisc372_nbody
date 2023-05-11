@@ -18,9 +18,9 @@ double *mass;
 //Side Effects: Allocates memory in the hVel, hPos, and mass global variables
 void initHostMemory(int numObjects)
 {
-	cudaMallocManaged(&hVel,sizeof(vector3) * numObjects);
-	cudaMallocManaged(&hPos,sizeof(vector3) * numObjects);
-	cudaMallocManaged(&mass,sizeof(double) * numObjects);
+	hVel = (vector3 *)malloc(sizeof(vector3) * numObjects);
+	hPos = (vector3 *)malloc(sizeof(vector3) * numObjects);
+	mass = (double *)malloc(sizeof(double) * numObjects);
 }
 
 //freeHostMemory: Free storage allocated by a previous call to initHostMemory
@@ -29,9 +29,9 @@ void initHostMemory(int numObjects)
 //Side Effects: Frees the memory allocated to global variables hVel, hPos, and mass.
 void freeHostMemory()
 {
-	cudaFree(hVel);
-	cudaFree(hPos);
-	cudaFree(mass);
+	free(hVel);
+	free(hPos);
+	free(mass);
 }
 
 //planetFill: Fill the first NUMPLANETS+1 entries of the entity arrays with an estimation
@@ -99,11 +99,30 @@ int main(int argc, char **argv)
 	planetFill();
 	randomFill(NUMPLANETS + 1, NUMASTEROIDS);
 	//now we have a system.
+	vector3 *hVeld;
+	vector3 *hPosd;
+	double *massd;
+
+	//device
+	cudaMalloc((void**)&hVeld,sizeof(vector3) * NUMENTITIES);
+	cudaMalloc((void**)&hPosd,sizeof(vector3) * NUMENTITIES);
+	cudaMalloc((void**)&massd,sizeof(double) * NUMENTITIES);
+
+	cudaMemcpy(hVeld, hVel, sizeof(double) * NUMENTITIES, cudaMemcpyHostToDevice);
+    cudaMemcpy(hPosd, hPos, sizeof(double) * NUMENTITIES, cudaMemcpyHostToDevice);
+    cudaMemcpy(massd, mass, sizeof(double) * NUMENTITIES, cudaMemcpyHostToDevice);
+	dim3 dimBlock(512);
+    dim3 dimGrid(1024/512);
+
+
 	#ifdef DEBUG
 	printSystem(stdout);
 	#endif
 	for (t_now=0;t_now<DURATION;t_now+=INTERVAL){
 		compute();
+		cudaMemcpy(hVel, hVeld, sizeof(double) * NUMENTITIES, cudaMemcpyDeviceToHost);
+		cudaMemcpy(hPos, hPosd, sizeof(double) * NUMENTITIES, cudaMemcpyDeviceToHost);
+		cudaMemcpy(mass, massd, sizeof(double) * NUMENTITIES, cudaMemcpyDeviceToHost);
 	}
 	clock_t t1=clock()-t0;
 #ifdef DEBUG
@@ -112,4 +131,8 @@ int main(int argc, char **argv)
 	printf("This took a total time of %f seconds\n",(double)t1/CLOCKS_PER_SEC);
 
 	freeHostMemory();
+
+	cudaFree(hVeld);
+    cudaFree(hPosd);
+    cudaFree(massd);
 }
