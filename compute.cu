@@ -3,6 +3,7 @@
 #include "vector.h"
 #include "config.h"
 #include <cuda.h>
+#include <stdio.h>
 
 //compute: Updates the positions and locations of the objects in the system based on gravity.
 //Parameters: None
@@ -13,13 +14,16 @@ __global__ void compute(vector3 *d_hVel,vector3 *d_hPos,double *d_mass){
 	//make an acceleration matrix which is NUMENTITIES squared in size;
 	int j,k;
 	int i =  blockDim.x * blockIdx.x + threadIdx.x;
+	int before = d_hVel[i][0];
 	vector3* values=(vector3*)malloc(sizeof(vector3)*NUMENTITIES*NUMENTITIES);
 	vector3** accels=(vector3**)malloc(sizeof(vector3*)*NUMENTITIES);
-	if (i < NUMENTITIES)
+	if (i < NUMENTITIES){
 		accels[i]=&values[i*NUMENTITIES];
+	}
 	//first compute the pairwise accelerations.  Effect is on the first argument.
 	if (i < NUMENTITIES){
 		for (j=0;j<NUMENTITIES;j++){
+			printf("test: %d\n",j);
 			if (i==j) {
 				FILL_VECTOR(accels[i][j],0,0,0);
 			}
@@ -46,7 +50,12 @@ __global__ void compute(vector3 *d_hVel,vector3 *d_hPos,double *d_mass){
 			d_hVel[i][k]+=accel_sum[k]*INTERVAL;
 			d_hPos[i][k]=d_hVel[i][k]*INTERVAL;
 		}
+		int after = d_hVel[i][0];
+		if (before == after) {
+			printf("wroing\n");
 	}
+	}
+
 	free(accels);
 	free(values);
 }
