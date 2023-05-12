@@ -115,37 +115,44 @@ int main(int argc, char **argv)
 	cudaMallocManaged((void**)&accels, sizeof(vector3*)*NUMENTITIES);*/
 
 	//memory copy to decice
-	cudaMemcpy(d_hVel, hVel, sizeof(vector3) * NUMENTITIES, cudaMemcpyHostToDevice);
-	cudaMemcpy(d_hPos, hPos, sizeof(vector3) * NUMENTITIES, cudaMemcpyHostToDevice);
-	cudaMemcpy(d_mass, mass, sizeof(double) * NUMENTITIES, cudaMemcpyHostToDevice);
+	cudaMemcpyAsync(d_hVel, hVel, sizeof(vector3) * NUMENTITIES, cudaMemcpyHostToDevice);
+	cudaMemcpyAsync(d_hPos, hPos, sizeof(vector3) * NUMENTITIES, cudaMemcpyHostToDevice);
+	cudaMemcpyAsync(d_mass, mass, sizeof(double) * NUMENTITIES, cudaMemcpyHostToDevice);
 	//block and grid
 	int perjob = 16;
 	int  nn = NUMENTITIES/perjob;
-	dim3 dimGrid(nn+1);
-    dim3 dimBlock(perjob);
+	dim3 dimGrid(16,16);
+    dim3 dimBlock(16);
+	//for 1000
+	//dim3 dimGrid(4,4);
+    //dim3 dimBlock(64);
+
+	//dim3 dimGrid(nn+1);
+    //dim3 dimBlock(perjob);
 	//now we have a system.
 	#ifdef DEBUG
 	printSystem(stdout);
 	#endif
+	cudaDeviceSynchronize();
 	for (t_now=0;t_now<DURATION;t_now+=INTERVAL){
 		//compute();
 		compute<<<dimGrid,dimBlock>>>(d_hVel,d_hPos,d_mass,values,accels);
 		//compute<<<dimGrid,dimBlock>>>(d_hVel,d_hPos,d_mass);
 	}
-	cudaMemcpy(hVel, d_hVel, sizeof(vector3) * NUMENTITIES, cudaMemcpyDeviceToHost);
-	cudaMemcpy(hPos, d_hPos, sizeof(vector3) * NUMENTITIES, cudaMemcpyDeviceToHost);
-	cudaMemcpy(mass, d_mass, sizeof(double) * NUMENTITIES, cudaMemcpyDeviceToHost);
-	//cudaDeviceSynchronize();
+	cudaMemcpyAsync(hVel, d_hVel, sizeof(vector3) * NUMENTITIES, cudaMemcpyDeviceToHost);
+	cudaMemcpyAsync(hPos, d_hPos, sizeof(vector3) * NUMENTITIES, cudaMemcpyDeviceToHost);
+	cudaMemcpyAsync(mass, d_mass, sizeof(double) * NUMENTITIES, cudaMemcpyDeviceToHost);
+	cudaDeviceSynchronize();
 	clock_t t1=clock()-t0;
 #ifdef DEBUG
 	printSystem(stdout);
 #endif
 	printf("This took a total time of %f seconds\n",(double)t1/CLOCKS_PER_SEC);
-	printf("this record if for:  %f for : %d block\n  ",(double)NUMASTEROIDS,nn);
+	printf("this record if for:  %d for : %d block\n  ",NUMASTEROIDS,nn);
 	freeHostMemory();
 	cudaFree(d_hVel);
 	cudaFree(d_hPos);
 	cudaFree(d_mass);
-	cudaFree(accels);
-	cudaFree(values);
+	//cudaFree(accels);
+	//cudaFree(values);
 }
