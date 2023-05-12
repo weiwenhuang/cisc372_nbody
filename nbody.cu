@@ -119,19 +119,19 @@ int main(int argc, char **argv)
 	cudaMemcpyAsync(d_hPos, hPos, sizeof(vector3) * NUMENTITIES, cudaMemcpyHostToDevice);
 	cudaMemcpyAsync(d_mass, mass, sizeof(double) * NUMENTITIES, cudaMemcpyHostToDevice);
 	//block and grid
-	int perjob = 16;
+	int perjob = 128;
 	int  nn = NUMENTITIES/perjob;
-	dim3 dimGrid(16,16);
-    dim3 dimBlock(16);
+	//dim3 dimGrid(16,16);
+    //dim3 dimBlock(16);
 	//for 1000
-	//dim3 dimGrid(4,4);
-    //dim3 dimBlock(64);
+	//dim3 dimGrid(4);
+    //dim3 dimBlock(16,16);
 
-	//dim3 dimGrid(nn+1);
-    //dim3 dimBlock(perjob);
+	dim3 dimGrid(nn+1);
+    dim3 dimBlock(perjob);
 	//now we have a system.
 	#ifdef DEBUG
-	printSystem(stdout);
+	//printSystem(stdout);
 	#endif
 	cudaDeviceSynchronize();
 	for (t_now=0;t_now<DURATION;t_now+=INTERVAL){
@@ -153,6 +153,6 @@ int main(int argc, char **argv)
 	cudaFree(d_hVel);
 	cudaFree(d_hPos);
 	cudaFree(d_mass);
-	//cudaFree(accels);
-	//cudaFree(values);
+	cudaFree(accels);
+	cudaFree(values);
 }
