@@ -137,7 +137,6 @@ int main(int argc, char **argv)
 	for (t_now=0;t_now<DURATION;t_now+=INTERVAL){
 		//compute();
 		compute<<<dimGrid,dimBlock>>>(d_hVel,d_hPos,d_mass,values,accels);
-		cudaDeviceSynchronize();
 		//compute<<<dimGrid,dimBlock>>>(d_hVel,d_hPos,d_mass);
 	}
 	cudaMemcpyAsync(hVel, d_hVel, sizeof(vector3) * NUMENTITIES, cudaMemcpyDeviceToHost);
