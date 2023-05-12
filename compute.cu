@@ -17,8 +17,6 @@ __global__ void compute(vector3 *d_hVel,vector3 *d_hPos,double *d_mass,vector3* 
 	//int i = blockDim.x * blockIdx.x +blockIdx.x + (16*threadIdx.y);
 	//vector3* values=(vector3*)malloc(sizeof(vector3)*NUMENTITIES*NUMENTITIES);
 	//vector3** accels=(vector3**)malloc(sizeof(vector3*)*NUMENTITIES);
-	//__shared__ vector3* values[NUMENTITIES*NUMENTITIES];
-	//__shared__ vector3** accels[NUMENTITIES];
 	//printf("bx:%d   by: %d  tx: %d ty: %d\n",blockIdx.x,blockIdx.y,threadIdx.x,threadIdx.y);
 	//printf("test:%d\n",i);
 	if (i < NUMENTITIES){
